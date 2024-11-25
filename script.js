@@ -125,31 +125,28 @@ d3.csv("data.csv").then((data) => {
   svg.append("g").call(d3.axisLeft(yScale)).attr("class", "axis");
 });
 
-// Initialize Waypoints
-// const usMapWaypoint = new Waypoint({
-//   element: document.getElementById("usMap"),
-//   handler: function (direction) {
-//     if (direction === "down") {
-//       d3.select("#usMap").style("opacity", 1);
-//       d3.select("#heatmap").style("opacity", 0);
-//     }
-//   },
-//   offset: "50%",
-// });
+const usMapWaypoint = new Waypoint({
+  element: document.getElementById("usMap"),
+  handler: function (direction) {
+    if (direction === "down") {
+      d3.select("#usMap").style("opacity", 1);
+      d3.select("#heatmap").style("opacity", 0);
+    }
+  },
+  offset: "50%",
+});
 
-// const heatmapWaypoint = new Waypoint({
-//   element: document.getElementById("heatmap"),
-//   handler: function (direction) {
-//     if (direction === "down") {
-//       d3.select("#usMap").style("opacity", 0);
-//       d3.select("#heatmap").style("opacity", 1);
-//     } else {
-//       d3.select("#usMap").style("opacity", 1);
-//       d3.select("#heatmap").style("opacity", 0);
-//     }
-//   },
-//   offset: "50%",
-// });
-
-// // Initial state
-// d3.select("#heatmap").style("opacity", 0);
+const heatmapWaypoint = new Waypoint({
+  element: document.getElementById("heatmap"),
+  handler: function (direction) {
+    if (direction === "down") {
+      d3.select("#usMap").style("opacity", 0);
+      d3.select("#heatmap").style("opacity", 1);
+    } else {
+      d3.select("#usMap").style("opacity", 1);
+      d3.select("#heatmap").style("opacity", 0);
+    }
+  },
+  offset: "50%",
+});
+d3.select("#heatmap").style("opacity", 0);
