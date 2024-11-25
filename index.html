@@ -6,83 +6,24 @@
     <title>USA Map with Hoverable States</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
-    <style>
-      .state {
-        fill: #cce5df;
-        stroke: #333;
-        stroke-width: 1px;
-        transition: fill 0.2s;
-      }
-      .state:hover {
-        fill: #8cd4ab;
-      }
-      .tooltip {
-        position: absolute;
-        padding: 10px;
-        background-color: white;
-        border: 1px solid #333;
-        border-radius: 4px;
-        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
-        pointer-events: none;
-        display: none;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/noframework.waypoints.min.js"></script>
   </head>
   <body>
-    <svg id="usMap" width="960" height="600"></svg>
-    <div id="tooltip" class="tooltip"></div>
-    <script>
-      const width = 960;
-      const height = 600;
-      const svg = d3.select("#usMap");
-      const tooltip = d3.select("#tooltip");
-      
-      d3.json("https://d3js.org/us-10m.v1.json").then((us) => {
-
-
-        const path = d3.geoPath();
-        svg
-          .append("g")
-          .selectAll("path")
-          .data(topojson.feature(us, us.objects.states).features)
-          .enter()
-          .append("path")
-          .attr("class", "state")
-          .attr("d", path)
-          .on("mouseover", function (event, d) {
-            d3.select(this).style("fill", "#77cba4");
-          })
-          .on("mouseout", function (event, d) {
-            d3.select(this).style("fill", "#cce5df");
-          })
-          .on("click",function(event, d){
-            console.log("clicked")
-            const stateId = d.id;
-            d3.csv("NFL_team_data.csv").then(data => {
-            console.log(stateId)
-            const teamsInState = data.filter((team) => team.id === stateId);
-            if (teamsInState.length > 0) {
-              const teamInfo = teamsInState
-            .map(
-              (team) =>
-                `<strong>${team.team_name}</strong><br>Stadium: ${team.home_stadium}<br>Conference: ${team.conference}<br>Division: ${team.division}<br>Superbowl Wins: ${team.superbowl_wins}`
-            )
-            .join("<br><br>");
-
-          tooltip
-            .html(`${teamInfo}`)
-            .style("display", "block")
-            .style("top", "50px")  
-                .style("left", `${width - 270}px`);
-        } else {
-          tooltip 
-          .html("There is no team in this state")
-            .style("display", "block")
-            .style("top", "50px")  
-                .style("left", `${width - 270}px`);
-  }
-          })});
-      });
-    </script>
+    <h1>Popularity of the NFL</h1>
+    <p>
+      Everyone knows that the NFL produces a popular product in the United
+      states, but lets take a look at how popular it is, and what makes it the
+      most valueable sports league in the world.
+    </p>
+    <div class="center_div">
+      <svg id="usMap" width="950" height="650"></svg>
+    </div>
+    <div class="center_div">
+      <div id="heatmap"></div>
+    </div>
+    <div id="map_tooltip"></div>
+    <div id="heatmap_tooltip"></div>
+    <script src="script.js"></script>
   </body>
 </html>

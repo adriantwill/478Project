@@ -1,0 +1,37 @@
+.state {
+  fill: #cce5df;
+  stroke: #333;
+  stroke-width: 1px;
+  transition: fill 0.2s;
+}
+.state:hover {
+  fill: #8cd4ab;
+}
+#map_tooltip {
+  position: absolute;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #333;
+  border-radius: 4px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  display: none;
+}
+.axis text {
+  font-size: 10px;
+}
+.heatmap rect {
+  stroke: #ccc;
+}
+
+.center_div,
+g {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h1,
+p {
+  text-align: center;
+}
