@@ -150,3 +150,120 @@ const heatmapWaypoint = new Waypoint({
   offset: "50%",
 });
 d3.select("#heatmap").style("opacity", 0);
+
+const radialChartContainer = d3.select("#radial-chart");
+const radialChartWidth = 800;
+const radialChartHeight = 600;
+const radius = Math.min(radialChartWidth, radialChartHeight) / 2 - 50; // Base radius for the chart
+
+// Append the SVG for the radial chart
+const radialChart = radialChartContainer
+  .append("svg")
+  .attr("width", radialChartWidth)
+  .attr("height", radialChartHeight)
+  .append("g")
+  .attr("transform", `translate(${radialChartWidth / 2}, ${radialChartHeight / 2})`);
+
+// Load the data
+d3.csv("data.csv").then((data) => {
+  const totalAttendance = data.map((d) => +d.Total); // Get the attendance values
+  const teams = data.map((d) => d.Tm); // Get the team names
+
+  // Calculate the total attendance sum for comparison
+  const attendanceSum = d3.sum(totalAttendance);
+
+  // Generate pie chart data
+  const pie = d3
+    .pie()
+    .value((d) => d)(totalAttendance);
+
+  // Define the arc generator
+  const arc = d3
+    .arc()
+    .innerRadius(100) // Donut chart (optional: set to 0 for a pie chart)
+    .outerRadius(radius); // Outer radius fixed for all segments
+
+  // Define color scale (gradient for visual comparison)
+  const color = d3
+    .scaleLinear()
+    .domain([d3.min(totalAttendance), d3.max(totalAttendance)])
+    .range(["#a2c4ff", "#0047ab"]); // Light to dark blue gradient
+
+  // Sort the pie chart data by attendance so the color and the chart match
+  pie.sort((a, b) => b.value - a.value);
+
+  // Add the arcs for the pie chart
+  radialChart
+    .selectAll("path")
+    .data(pie)
+    .enter()
+    .append("path")
+    .attr("d", arc) // Use the arc generator for each slice
+    .attr("fill", (d) => color(d.value)) // Color by value
+    .attr("stroke", "white")
+    .style("stroke-width", "2px")
+    .on("mouseover", function (event, d) {
+      const team = teams[d.index];
+      const attendance = totalAttendance[d.index];
+      const percentage = ((attendance / attendanceSum) * 100).toFixed(1);
+
+      // Tooltip for hover effect
+      map_tooltip
+        .style("display", "block")
+        .style("left", `${event.pageX}px`)
+        .style("top", `${event.pageY}px`)
+        .html(
+          `<strong>${team}</strong><br>
+           Attendance: ${attendance.toLocaleString()}<br>
+           Percentage: ${percentage}%`
+        );
+    })
+    .on("mouseout", function () {
+      map_tooltip.style("display", "none");
+    });
+
+  // Add percentage labels inside the arcs
+  radialChart
+    .selectAll("text")
+    .data(pie)
+    .enter()
+    .append("text")
+    .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("fill", "white")
+    .text((d) => {
+      const percentage = ((d.value / attendanceSum) * 100).toFixed(1);
+      return `${percentage}%`; // Show percentage inside each slice
+    });
+
+  // Add the legend
+  const legend = radialChart
+    .append("g")
+    .attr(
+      "transform",
+      `translate(${-radialChartWidth / 2 + 20}, ${-radialChartHeight / 2 + 20})`
+    );
+
+  legend
+    .selectAll("rect")
+    .data(teams)
+    .enter()
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", (d, i) => i * 20)
+    .attr("width", 18)
+    .attr("height", 18)
+    .attr("fill", (d, i) => color(totalAttendance[i])); // Color the legend based on attendance
+
+  legend
+    .selectAll("text")
+    .data(teams)
+    .enter()
+    .append("text")
+    .attr("x", 25)
+    .attr("y", (d, i) => i * 20 + 14)
+    .text((d) => d) // Show the team names in the legend
+    .style("font-size", "14px")
+    .attr("fill", "#333");
+});
