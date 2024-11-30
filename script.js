@@ -151,119 +151,145 @@ const heatmapWaypoint = new Waypoint({
 });
 d3.select("#heatmap").style("opacity", 0);
 
-const radialChartContainer = d3.select("#radial-chart");
-const radialChartWidth = 800;
-const radialChartHeight = 600;
-const radius = Math.min(radialChartWidth, radialChartHeight) / 2 - 50; // Base radius for the chart
+function createRadialChart(data) {
+  d3.select("#radial-chart").selectAll("*").remove();
 
-// Append the SVG for the radial chart
-const radialChart = radialChartContainer
-  .append("svg")
-  .attr("width", radialChartWidth)
-  .attr("height", radialChartHeight)
-  .append("g")
-  .attr("transform", `translate(${radialChartWidth / 2}, ${radialChartHeight / 2})`);
+  const radialChartContainer = d3.select("#radial-chart");
+  const margin = { top: 50, right: 150, bottom: 50, left: 150 };
+  const width = 1300 - margin.left - margin.right;
+  const height = 900 - margin.top - margin.bottom;
+  const innerRadius = 150;
+  const outerRadius = Math.min(width, height) / 2 - 100;
 
-// Load the data
-d3.csv("data.csv").then((data) => {
-  const totalAttendance = data.map((d) => +d.Total); // Get the attendance values
-  const teams = data.map((d) => d.Tm); // Get the team names
+  const processedData = data.map(d => ({
+    team: d.Tm,
+    total: +d.Total,
+    home: +d.Home,
+    away: +d.Away,
+    totalPercentage: ((+d.Total / d3.sum(data, f => +f.Total)) * 100).toFixed(2)
+  })).sort((a, b) => b.total - a.total);
 
-  // Calculate the total attendance sum for comparison
-  const attendanceSum = d3.sum(totalAttendance);
-
-  // Generate pie chart data
-  const pie = d3
-    .pie()
-    .value((d) => d)(totalAttendance);
-
-  // Define the arc generator
-  const arc = d3
-    .arc()
-    .innerRadius(100) // Donut chart (optional: set to 0 for a pie chart)
-    .outerRadius(radius); // Outer radius fixed for all segments
-
-  // Define color scale (gradient for visual comparison)
-  const color = d3
-    .scaleLinear()
-    .domain([d3.min(totalAttendance), d3.max(totalAttendance)])
-    .range(["#a2c4ff", "#0047ab"]); // Light to dark blue gradient
-
-  // Sort the pie chart data by attendance so the color and the chart match
-  pie.sort((a, b) => b.value - a.value);
-
-  // Add the arcs for the pie chart
-  radialChart
-    .selectAll("path")
-    .data(pie)
-    .enter()
-    .append("path")
-    .attr("d", arc) // Use the arc generator for each slice
-    .attr("fill", (d) => color(d.value)) // Color by value
-    .attr("stroke", "white")
-    .style("stroke-width", "2px")
-    .on("mouseover", function (event, d) {
-      const team = teams[d.index];
-      const attendance = totalAttendance[d.index];
-      const percentage = ((attendance / attendanceSum) * 100).toFixed(1);
-
-      // Tooltip for hover effect
-      map_tooltip
-        .style("display", "block")
-        .style("left", `${event.pageX}px`)
-        .style("top", `${event.pageY}px`)
-        .html(
-          `<strong>${team}</strong><br>
-           Attendance: ${attendance.toLocaleString()}<br>
-           Percentage: ${percentage}%`
-        );
-    })
-    .on("mouseout", function () {
-      map_tooltip.style("display", "none");
-    });
-
-  // Add percentage labels inside the arcs
-  radialChart
-    .selectAll("text")
-    .data(pie)
-    .enter()
-    .append("text")
-    .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-    .attr("text-anchor", "middle")
-    .style("font-size", "14px")
-    .style("fill", "white")
-    .text((d) => {
-      const percentage = ((d.value / attendanceSum) * 100).toFixed(1);
-      return `${percentage}%`; // Show percentage inside each slice
-    });
-
-  // Add the legend
-  const legend = radialChart
+  const svg = radialChartContainer
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr(
-      "transform",
-      `translate(${-radialChartWidth / 2 + 20}, ${-radialChartHeight / 2 + 20})`
-    );
+    .attr("transform", `translate(${width/2 + margin.left},${height/2 + margin.top})`);
 
-  legend
-    .selectAll("rect")
-    .data(teams)
+  const colorScale = d3.scaleSequential()
+    .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+    .interpolator(d3.interpolateBlues);
+
+  const pie = d3.pie()
+    .value(d => d.total)
+    .sort(null);
+
+  const arc = d3.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(d => {
+      const scale = d3.scaleLinear()
+        .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+        .range([innerRadius + 100, outerRadius]);
+      return scale(d.data.total);
+    });
+
+  const arcs = svg.selectAll(".arc")
+    .data(pie(processedData))
     .enter()
-    .append("rect")
+    .append("g")
+    .attr("class", "arc");
+
+  const paths = arcs.append("path")
+    .attr("d", arc)
+    .attr("fill", d => colorScale(d.data.total))
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .on("mouseover", function(event, d) {
+      d3.select(this)
+        .transition()
+        .duration(200)
+        .attr("stroke", "black")
+        .attr("stroke-width", 4);
+
+      const tooltip = d3.select("#tooltip")
+        .style("display", "block")
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY + 10}px`)
+        .html(`
+          <strong>${d.data.team}</strong><br>
+          Total Attendance: ${d.data.total.toLocaleString()}<br>
+          Percentage: ${d.data.totalPercentage}%<br>
+          Home Attendance: ${d.data.home.toLocaleString()}<br>
+          Away Attendance: ${d.data.away.toLocaleString()}
+        `);
+    })
+    .on("mouseout", function() {
+      d3.select(this)
+        .transition()
+        .duration(200)
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      d3.select("#tooltip").style("display", "none");
+    });
+
+  arcs.append("text")
+  .attr("transform", d => {
+    const pos = arc.centroid(d);
+    pos[0] *= 1.8; 
+    pos[1] *= 1.5;
+    return `translate(${pos})`;
+  })
+  .attr("text-anchor", "middle")
+  .attr("font-size", "12px")
+  .text(d => `${d.data.team} (${d.data.totalPercentage}%)`)
+  .style("fill", "black")
+  .style("font-weight", "bold");
+
+  svg.append("text")
     .attr("x", 0)
-    .attr("y", (d, i) => i * 20)
-    .attr("width", 18)
-    .attr("height", 18)
-    .attr("fill", (d, i) => color(totalAttendance[i])); // Color the legend based on attendance
+    .attr("y", -outerRadius - 70)
+    .attr("text-anchor", "middle")
+    .style("font-size", "24px")
+    .style("font-weight", "bold")
+    .text("NFL Team Attendance Breakdown by Percentage Share....");
 
-  legend
-    .selectAll("text")
-    .data(teams)
+  const legend = svg.append("g")
+    .attr("transform", `translate(${outerRadius + 150}, ${-outerRadius})`);
+
+  const legendRectSize = 20;
+  const legendItemHeight = 25;
+
+  const legendItems = legend.selectAll(".legend-item")
+    .data(processedData)
     .enter()
-    .append("text")
-    .attr("x", 25)
-    .attr("y", (d, i) => i * 20 + 14)
-    .text((d) => d) // Show the team names in the legend
+    .append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * legendItemHeight})`);
+
+  legendItems.append("rect")
+    .attr("width", legendRectSize)
+    .attr("height", legendRectSize)
+    .style("fill", d => colorScale(d.total));
+
+  legendItems.append("text")
+    .attr("x", legendRectSize + 10)
+    .attr("y", legendRectSize / 2)
+    .attr("dy", "0.5em")
     .style("font-size", "14px")
-    .attr("fill", "#333");
-});
+    .text(d => `${d.team} (${d.totalPercentage}%)`);
+
+  svg.call(d3.zoom()
+    .scaleExtent([1, 4])
+    .on("zoom", function() {
+      svg.attr("transform", d3.event.transform);
+    }));
+
+  svg.on("click", function() {
+    const currentTransform = d3.zoomTransform(this);
+    const newTransform = currentTransform.scale(currentTransform.k * 0.9);
+    svg.transition().duration(500).call(d3.zoom().transform, newTransform);
+  });
+}
+
+d3.csv("data.csv").then(createRadialChart);
