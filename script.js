@@ -149,7 +149,6 @@ const heatmapWaypoint = new Waypoint({
   },
   offset: "50%",
 });
-d3.select("#heatmap").style("opacity", 0);
 
 function createRadialChart(data) {
   d3.select("#radial-chart").selectAll("*").remove();
@@ -161,61 +160,81 @@ function createRadialChart(data) {
   const innerRadius = 150;
   const outerRadius = Math.min(width, height) / 2 - 100;
 
-  const processedData = data.map(d => ({
-    team: d.Tm,
-    total: +d.Total,
-    home: +d.Home,
-    away: +d.Away,
-    totalPercentage: ((+d.Total / d3.sum(data, f => +f.Total)) * 100).toFixed(2)
-  })).sort((a, b) => b.total - a.total);
+  const processedData = data
+    .map((d) => ({
+      team: d.Tm,
+      total: +d.Total,
+      home: +d.Home,
+      away: +d.Away,
+      totalPercentage: (
+        (+d.Total / d3.sum(data, (f) => +f.Total)) *
+        100
+      ).toFixed(2),
+    }))
+    .sort((a, b) => b.total - a.total);
 
   const svg = radialChartContainer
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", `translate(${width/2 + margin.left},${height/2 + margin.top})`);
+    .attr(
+      "transform",
+      `translate(${width / 2 + margin.left},${height / 2 + margin.top})`
+    );
 
-  const colorScale = d3.scaleSequential()
-    .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+  const colorScale = d3
+    .scaleSequential()
+    .domain([
+      d3.min(processedData, (d) => d.total),
+      d3.max(processedData, (d) => d.total),
+    ])
     .interpolator(d3.interpolateBlues);
 
-  const pie = d3.pie()
-    .value(d => d.total)
+  const pie = d3
+    .pie()
+    .value((d) => d.total)
     .sort(null);
 
-  const arc = d3.arc()
+  const arc = d3
+    .arc()
     .innerRadius(innerRadius)
-    .outerRadius(d => {
-      const scale = d3.scaleLinear()
-        .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+    .outerRadius((d) => {
+      const scale = d3
+        .scaleLinear()
+        .domain([
+          d3.min(processedData, (d) => d.total),
+          d3.max(processedData, (d) => d.total),
+        ])
         .range([innerRadius + 100, outerRadius]);
       return scale(d.data.total);
     });
 
-  const arcs = svg.selectAll(".arc")
+  const arcs = svg
+    .selectAll(".arc")
     .data(pie(processedData))
     .enter()
     .append("g")
     .attr("class", "arc");
 
-  const paths = arcs.append("path")
+  const paths = arcs
+    .append("path")
     .attr("d", arc)
-    .attr("fill", d => colorScale(d.data.total))
+    .attr("fill", (d) => colorScale(d.data.total))
     .attr("stroke", "white")
     .attr("stroke-width", 2)
-    .on("mouseover", function(event, d) {
+    .on("mouseover", function (event, d) {
       d3.select(this)
         .transition()
         .duration(200)
         .attr("stroke", "black")
         .attr("stroke-width", 4);
 
-      const tooltip = d3.select("#tooltip")
+      const tooltip = d3
+        .select("#tooltip")
         .style("display", "block")
         .style("left", `${event.pageX + 10}px`)
-        .style("top", `${event.pageY + 10}px`)
-        .html(`
+        .style("top", `${event.pageY + 10}px`).html(`
           <strong>${d.data.team}</strong><br>
           Total Attendance: ${d.data.total.toLocaleString()}<br>
           Percentage: ${d.data.totalPercentage}%<br>
@@ -223,7 +242,7 @@ function createRadialChart(data) {
           Away Attendance: ${d.data.away.toLocaleString()}
         `);
     })
-    .on("mouseout", function() {
+    .on("mouseout", function () {
       d3.select(this)
         .transition()
         .duration(200)
@@ -233,20 +252,22 @@ function createRadialChart(data) {
       d3.select("#tooltip").style("display", "none");
     });
 
-  arcs.append("text")
-  .attr("transform", d => {
-    const pos = arc.centroid(d);
-    pos[0] *= 1.8; 
-    pos[1] *= 1.5;
-    return `translate(${pos})`;
-  })
-  .attr("text-anchor", "middle")
-  .attr("font-size", "12px")
-  .text(d => `${d.data.team} (${d.data.totalPercentage}%)`)
-  .style("fill", "black")
-  .style("font-weight", "bold");
+  arcs
+    .append("text")
+    .attr("transform", (d) => {
+      const pos = arc.centroid(d);
+      pos[0] *= 1.8;
+      pos[1] *= 1.5;
+      return `translate(${pos})`;
+    })
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .text((d) => `${d.data.team} (${d.data.totalPercentage}%)`)
+    .style("fill", "black")
+    .style("font-weight", "bold");
 
-  svg.append("text")
+  svg
+    .append("text")
     .attr("x", 0)
     .attr("y", -outerRadius - 70)
     .attr("text-anchor", "middle")
@@ -254,38 +275,45 @@ function createRadialChart(data) {
     .style("font-weight", "bold")
     .text("NFL Team Attendance Breakdown by Percentage Share....");
 
-  const legend = svg.append("g")
+  const legend = svg
+    .append("g")
     .attr("transform", `translate(${outerRadius + 150}, ${-outerRadius})`);
 
   const legendRectSize = 20;
   const legendItemHeight = 25;
 
-  const legendItems = legend.selectAll(".legend-item")
+  const legendItems = legend
+    .selectAll(".legend-item")
     .data(processedData)
     .enter()
     .append("g")
     .attr("class", "legend-item")
     .attr("transform", (d, i) => `translate(0, ${i * legendItemHeight})`);
 
-  legendItems.append("rect")
+  legendItems
+    .append("rect")
     .attr("width", legendRectSize)
     .attr("height", legendRectSize)
-    .style("fill", d => colorScale(d.total));
+    .style("fill", (d) => colorScale(d.total));
 
-  legendItems.append("text")
+  legendItems
+    .append("text")
     .attr("x", legendRectSize + 10)
     .attr("y", legendRectSize / 2)
     .attr("dy", "0.5em")
     .style("font-size", "14px")
-    .text(d => `${d.team} (${d.totalPercentage}%)`);
+    .text((d) => `${d.team} (${d.totalPercentage}%)`);
 
-  svg.call(d3.zoom()
-    .scaleExtent([1, 4])
-    .on("zoom", function() {
-      svg.attr("transform", d3.event.transform);
-    }));
+  svg.call(
+    d3
+      .zoom()
+      .scaleExtent([1, 4])
+      .on("zoom", function () {
+        svg.attr("transform", d3.event.transform);
+      })
+  );
 
-  svg.on("click", function() {
+  svg.on("click", function () {
     const currentTransform = d3.zoomTransform(this);
     const newTransform = currentTransform.scale(currentTransform.k * 0.9);
     svg.transition().duration(500).call(d3.zoom().transform, newTransform);
