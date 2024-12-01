@@ -3,8 +3,103 @@ const width = 960;
 const height = 600;
 const svg = d3.select("#usMap");
 const map_tooltip = d3.select("#map_tooltip");
+Promise.all([
+  d3.csv("NFL_team_data.csv"),
+  d3.csv("nfl_team_stats_2002-2023.csv"), // The file with stats for each team
+  d3.json("https://d3js.org/us-10m.v1.json")
+]).then(([teamData, statsData, us]) => {
+const teams = teamData.map(d => d.team_name);
 
-d3.json("https://d3js.org/us-10m.v1.json").then((us) => {
+const teamSelect = d3.select("#teamSelect");
+teams.forEach((team) => {
+  teamSelect.append("option").text(team).attr("value", team);
+});  
+
+const stats = d3.select("#stats")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
+
+const xScale = d3.scalePoint().range([0, width]).padding(0.5);
+const yScale = d3.scaleLinear().range([height, 0]);
+
+const xAxis = stats.append("g")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(xScale));
+
+const yAxis = stats.append("g").call(d3.axisLeft(yScale));
+
+function updateGraph(selectedTeam) {
+  const teamStats = statsData.filter((d) => (selectedTeam.includes(d.home) || selectedTeam.includes(d.away)) && d.season === "2002");
+  const scoreData = teamStats.map((d) => {
+    let score = 0;
+    if (selectedTeam.includes(d.home)) {
+      score = +d.score_home;
+    } else if (selectedTeam.includes(d.away)) {
+      score = +d.score_away;
+    }
+    return {
+      week: d.week,
+      score: score
+    };
+  });
+
+  const weeks = Array.from(new Set(scoreData.map((d) => d.week))); 
+
+  xScale.domain(weeks);
+  yScale.domain([0, d3.max(scoreData, (d) => d.score) + 5]);
+
+  xAxis.transition().duration(1000).call(d3.axisBottom(xScale));
+  yAxis.transition().duration(1000).call(d3.axisLeft(yScale));
+
+  // Lollipops - Lines
+  const lines = stats.selectAll(".lollipop-line")
+    .data(scoreData, d => d.week);
+
+  lines.enter()
+    .append("line")
+    .attr("class", "lollipop-line")
+    .attr("x1", d => xScale(d.week))
+    .attr("x2", d => xScale(d.week))
+    .attr("y1", yScale(0))
+    .attr("y2", yScale(0))
+    .attr("stroke", "gray")
+    .merge(lines)
+    .transition().duration(1000)
+    .attr("x1", d => xScale(d.week))
+    .attr("x2", d => xScale(d.week))
+    .attr("y2", d => yScale(d.score));
+
+  lines.exit().remove();
+
+  // Lollipops - Circles
+  const circles = stats.selectAll(".lollipop-circle")
+    .data(scoreData, d => d.week);
+
+  circles.enter()
+    .append("circle")
+    .attr("class", "lollipop-circle")
+    .attr("cx", d => xScale(d.week))
+    .attr("cy", yScale(0))
+    .attr("r", 5)
+    .attr("fill", "steelblue")
+    .merge(circles)
+    .transition().duration(1000)
+    .attr("cx", d => xScale(d.week))
+    .attr("cy", d => yScale(d.score));
+
+  circles.exit().remove();
+}
+
+updateGraph(teams[0]);
+
+teamSelect.on("change", function () {
+  const selectedTeam = d3.select(this).property("value");
+  updateGraph(selectedTeam);
+});
+
   const path = d3.geoPath();
   svg
     .append("g")
@@ -22,7 +117,6 @@ d3.json("https://d3js.org/us-10m.v1.json").then((us) => {
       d3.select(this).style("fill", "#77cba4");
       const stateId = d.id;
       d3.csv("NFL_team_data.csv").then((data) => {
-        console.log(stateId);
         const teamsInState = data.filter((team) => team.id === stateId);
         map_tooltip
           .style("display", "block")
@@ -41,8 +135,19 @@ d3.json("https://d3js.org/us-10m.v1.json").then((us) => {
           map_tooltip.html("There is no team in this state");
         }
       });
+    })
+    .on("click", function (event, d) {
+      const stateId = d.id;
+      const teamsInState = teamData.filter((team) => team.id === stateId);
+      if (teamsInState.length > 0) {
+        updateGraph(teamsInState[0].team_name);
+      } else {
+        console.log("No NFL teams in this state");
+      }
     });
 });
+
+
 
 d3.csv("data.csv").then((data) => {
   const margin = { top: 50, right: 20, bottom: 50, left: 200 };
@@ -150,3 +255,147 @@ const heatmapWaypoint = new Waypoint({
   offset: "50%",
 });
 d3.select("#heatmap").style("opacity", 0);
+
+
+function createRadialChart(data) {
+  d3.select("#radial-chart").selectAll("*").remove();
+
+  const radialChartContainer = d3.select("#radial-chart");
+  const margin = { top: 50, right: 150, bottom: 50, left: 150 };
+  const width = 1300 - margin.left - margin.right;
+  const height = 900 - margin.top - margin.bottom;
+  const innerRadius = 150;
+  const outerRadius = Math.min(width, height) / 2 - 100;
+
+  const processedData = data.map(d => ({
+    team: d.Tm,
+    total: +d.Total,
+    home: +d.Home,
+    away: +d.Away,
+    totalPercentage: ((+d.Total / d3.sum(data, f => +f.Total)) * 100).toFixed(2)
+  })).sort((a, b) => b.total - a.total);
+
+  const svg = radialChartContainer
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${width/2 + margin.left},${height/2 + margin.top})`);
+
+  const colorScale = d3.scaleSequential()
+    .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+    .interpolator(d3.interpolateBlues);
+
+  const pie = d3.pie()
+    .value(d => d.total)
+    .sort(null);
+
+  const arc = d3.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(d => {
+      const scale = d3.scaleLinear()
+        .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
+        .range([innerRadius + 100, outerRadius]);
+      return scale(d.data.total);
+    });
+
+  const arcs = svg.selectAll(".arc")
+    .data(pie(processedData))
+    .enter()
+    .append("g")
+    .attr("class", "arc");
+
+  const paths = arcs.append("path")
+    .attr("d", arc)
+    .attr("fill", d => colorScale(d.data.total))
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .on("mouseover", function(event, d) {
+      d3.select(this)
+        .transition()
+        .duration(200)
+        .attr("stroke", "black")
+        .attr("stroke-width", 4);
+
+      const tooltip = d3.select("#tooltip")
+        .style("display", "block")
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY + 10}px`)
+        .html(`
+          <strong>${d.data.team}</strong><br>
+          Total Attendance: ${d.data.total.toLocaleString()}<br>
+          Percentage: ${d.data.totalPercentage}%<br>
+          Home Attendance: ${d.data.home.toLocaleString()}<br>
+          Away Attendance: ${d.data.away.toLocaleString()}
+        `);
+    })
+    .on("mouseout", function() {
+      d3.select(this)
+        .transition()
+        .duration(200)
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      d3.select("#tooltip").style("display", "none");
+    });
+
+  arcs.append("text")
+  .attr("transform", d => {
+    const pos = arc.centroid(d);
+    pos[0] *= 1.8; 
+    pos[1] *= 1.5;
+    return `translate(${pos})`;
+  })
+  .attr("text-anchor", "middle")
+  .attr("font-size", "12px")
+  .text(d => `${d.data.team} (${d.data.totalPercentage}%)`)
+  .style("fill", "black")
+  .style("font-weight", "bold");
+
+  svg.append("text")
+    .attr("x", 0)
+    .attr("y", -outerRadius - 70)
+    .attr("text-anchor", "middle")
+    .style("font-size", "24px")
+    .style("font-weight", "bold")
+    .text("NFL Team Attendance Breakdown by Percentage Share....");
+
+  const legend = svg.append("g")
+    .attr("transform", `translate(${outerRadius + 150}, ${-outerRadius})`);
+
+  const legendRectSize = 20;
+  const legendItemHeight = 25;
+
+  const legendItems = legend.selectAll(".legend-item")
+    .data(processedData)
+    .enter()
+    .append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * legendItemHeight})`);
+
+  legendItems.append("rect")
+    .attr("width", legendRectSize)
+    .attr("height", legendRectSize)
+    .style("fill", d => colorScale(d.total));
+
+  legendItems.append("text")
+    .attr("x", legendRectSize + 10)
+    .attr("y", legendRectSize / 2)
+    .attr("dy", "0.5em")
+    .style("font-size", "14px")
+    .text(d => `${d.team} (${d.totalPercentage}%)`);
+
+  svg.call(d3.zoom()
+    .scaleExtent([1, 4])
+    .on("zoom", function() {
+      svg.attr("transform", d3.event.transform);
+    }));
+
+  svg.on("click", function() {
+    const currentTransform = d3.zoomTransform(this);
+    const newTransform = currentTransform.scale(currentTransform.k * 0.9);
+    svg.transition().duration(500).call(d3.zoom().transform, newTransform);
+  });
+}
+
+d3.csv("data.csv").then(createRadialChart);

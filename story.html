@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Why do we watch the NFL?</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/noframework.waypoints.min.js"></script>
+  </head>
+  <body>
+    <h1>Why do we watch the NFL?</h1>
+    <p>
+    The NFL (National Football League) is the most valuable sports franchise in the world, earning over 20 
+    billion dollars during the 2023 season. This level of revenue for an entertainment product is only 
+    possible because of the stories that have been crafted over decades. In this article we want to 
+    investigate, does an NFL team have to be good to be popular?
+
+    The first step in determining who the most popular teams is to determine what metric is being used to quantify 
+    popularity. We have chosen to look at a teams game by game viewership to analyze the popularity of the NFL.
+    </p>
+    <div id="radial-chart-container">
+        <div id="radial-chart"></div>
+    </div>  
+    <p>Looking at this chart its clear the NFL teams manage to maintain an equilbirium of viewership and popularity,
+        with no team truly dominating the viewership numbers and no team being completely left out to dry. 
+        The rest of the article will take a look at comparing the most popular team this season (Dallas Cowboys) with 
+        the least popular team (Arizona Cardinals). However, we want to make this more interesting for you so we want 
+        you to find your favorite team and compare how they are doing compared to our selection.
+    </p>
+    <div class="center_div">
+      <svg id="usMap" width="950" height="650"></svg>
+    </div>
+    <div class="center_div">
+      <div id="stats"></div>
+    </div>
+    <div class="center_div">
+      <div id="heatmap"></div>
+    </div>
+    
+    <div id="map_tooltip"></div>
+    <div id="heatmap_tooltip"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
