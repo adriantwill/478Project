@@ -10,27 +10,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/noframework.waypoints.min.js"></script>
   </head>
   <body>
-    <h1>Popularity of the NFL</h1>
-    <p>
-      Everyone knows that the NFL produces a popular product in the United
-      states, but lets take a look at how popular it is, and what makes it the
-      most valueable sports league in the world.
-    </p>
-    <div class="center_div">
-      <svg id="usMap" width="950" height="650"></svg>
+    <div class="story">
+      <div class="story-step">
+        <div style="width: 90%">
+          Everyone knows that the NFL produces a popular product in the United
+          states, but lets take a look at how popular it is, and what makes it
+          the most valueable sports league in the world.
+        </div>
+      </div>
+      <div class="story-step" class="center_div">
+        <svg id="usMap" width="950" height="650"></svg>
+      </div>
+      <div class="story-step" class="center_div">
+        <div id="stats"></div>
+      </div>
+      <div class="story-step" class="center_div">
+        <div id="heatmap"></div>
+      </div>
+      <div class="story-step" id="radial-chart-container">
+        <div id="radial-chart"></div>
+      </div>
     </div>
-    <div class="center_div">
-      <div id="stats"></div>
-    </div>
-    <div class="center_div">
-      <div id="heatmap"></div>
-    </div>
-    
     <div id="map_tooltip"></div>
-    <div id="heatmap_tooltip"></div>
-    <div id="radial-chart-container">
-      <div id="radial-chart"></div>
-    </div>
     <script src="script.js"></script>
   </body>
 </html>

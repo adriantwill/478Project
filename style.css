@@ -26,7 +26,7 @@
 
 .center_div,
 g {
-  display: flex;
+  display: flex-cloumn;
   justify-content: center;
   align-items: center;
 }
@@ -38,7 +38,7 @@ p {
 
 .chart-container {
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
@@ -74,6 +74,30 @@ h3 {
 }
 
 #polar-tooltip {
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
+}
+
+.story {
+  position: relative;
+  scroll-snap-type: y mandatory;
+}
+
+.story-step {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  text-align: center;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+  transition: transform 0.3s, opacity 0.3s;
+  opacity: 0.5;
+  scroll-snap-align: center;
+}
+
+.story-step.active {
+  opacity: 1;
+  transform: scale(1.1);
 }
