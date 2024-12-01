@@ -150,15 +150,11 @@ const heatmapWaypoint = new Waypoint({
   offset: "50%",
 });
 
-function createRadialChart(data) {
-  d3.select("#radial-chart").selectAll("*").remove();
-
-  const radialChartContainer = d3.select("#radial-chart");
-  const margin = { top: 50, right: 150, bottom: 50, left: 150 };
-  const width = 1300 - margin.left - margin.right;
-  const height = 900 - margin.top - margin.bottom;
-  const innerRadius = 150;
-  const outerRadius = Math.min(width, height) / 2 - 100;
+function createPolarAreaChart() {
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = 800 - margin.left - margin.right;
+  const height = 800 - margin.top - margin.bottom;
+  const radius = Math.min(width, height) / 2;
 
   const processedData = data
     .map((d) => ({
