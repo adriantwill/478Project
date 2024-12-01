@@ -36,3 +36,44 @@ p {
   text-align: center;
 }
 
+.chart-container {
+  display: flex;
+  flex-direction: column; 
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: 20px;
+}
+
+h2 {
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.h3-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+h3 {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: normal;
+  color: #34495e;
+  margin-left: 15px;
+  margin-bottom: 0;
+}
+
+#polar-chart {
+  margin: 20px auto;
+  display: block;
+}
+
+#polar-tooltip {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}

@@ -151,145 +151,155 @@ const heatmapWaypoint = new Waypoint({
 });
 d3.select("#heatmap").style("opacity", 0);
 
-function createRadialChart(data) {
-  d3.select("#radial-chart").selectAll("*").remove();
+function createPolarAreaChart() {
+  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const width = 800 - margin.left - margin.right;
+  const height = 800 - margin.top - margin.bottom;
+  const radius = Math.min(width, height) / 2;
 
-  const radialChartContainer = d3.select("#radial-chart");
-  const margin = { top: 50, right: 150, bottom: 50, left: 150 };
-  const width = 1300 - margin.left - margin.right;
-  const height = 900 - margin.top - margin.bottom;
-  const innerRadius = 150;
-  const outerRadius = Math.min(width, height) / 2 - 100;
-
-  const processedData = data.map(d => ({
-    team: d.Tm,
-    total: +d.Total,
-    home: +d.Home,
-    away: +d.Away,
-    totalPercentage: ((+d.Total / d3.sum(data, f => +f.Total)) * 100).toFixed(2)
-  })).sort((a, b) => b.total - a.total);
-
-  const svg = radialChartContainer
+  const svg = d3.select("#polar-chart")
     .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", `translate(${width/2 + margin.left},${height/2 + margin.top})`);
+      .attr("transform", `translate(${width/2},${height/2})`);
 
-  const colorScale = d3.scaleSequential()
-    .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
-    .interpolator(d3.interpolateBlues);
+  d3.csv("league_revenue.csv").then((data) => {
+    const leagues = ["NFL", "MLB", "NBA", "NHL"];
+    const yearRange = d3.extent(data, d => +d.Year);
+    
+    const colorScale = d3.scaleOrdinal()
+      .domain(leagues)
+      .range(["#1E5631", "#0077BE", "#C41E3A", "#FFA500"]); 
 
-  const pie = d3.pie()
-    .value(d => d.total)
-    .sort(null);
-
-  const arc = d3.arc()
-    .innerRadius(innerRadius)
-    .outerRadius(d => {
-      const scale = d3.scaleLinear()
-        .domain([d3.min(processedData, d => d.total), d3.max(processedData, d => d.total)])
-        .range([innerRadius + 100, outerRadius]);
-      return scale(d.data.total);
-    });
-
-  const arcs = svg.selectAll(".arc")
-    .data(pie(processedData))
-    .enter()
-    .append("g")
-    .attr("class", "arc");
-
-  const paths = arcs.append("path")
-    .attr("d", arc)
-    .attr("fill", d => colorScale(d.data.total))
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
-    .on("mouseover", function(event, d) {
-      d3.select(this)
-        .transition()
-        .duration(200)
-        .attr("stroke", "black")
-        .attr("stroke-width", 4);
-
-      const tooltip = d3.select("#tooltip")
-        .style("display", "block")
-        .style("left", `${event.pageX + 10}px`)
-        .style("top", `${event.pageY + 10}px`)
-        .html(`
-          <strong>${d.data.team}</strong><br>
-          Total Attendance: ${d.data.total.toLocaleString()}<br>
-          Percentage: ${d.data.totalPercentage}%<br>
-          Home Attendance: ${d.data.home.toLocaleString()}<br>
-          Away Attendance: ${d.data.away.toLocaleString()}
-        `);
-    })
-    .on("mouseout", function() {
-      d3.select(this)
-        .transition()
-        .duration(200)
-        .attr("stroke", "white")
-        .attr("stroke-width", 2);
-
-      d3.select("#tooltip").style("display", "none");
-    });
-
-  arcs.append("text")
-  .attr("transform", d => {
-    const pos = arc.centroid(d);
-    pos[0] *= 1.8; 
-    pos[1] *= 1.5;
-    return `translate(${pos})`;
-  })
-  .attr("text-anchor", "middle")
-  .attr("font-size", "12px")
-  .text(d => `${d.data.team} (${d.data.totalPercentage}%)`)
-  .style("fill", "black")
-  .style("font-weight", "bold");
-
-  svg.append("text")
-    .attr("x", 0)
-    .attr("y", -outerRadius - 70)
-    .attr("text-anchor", "middle")
-    .style("font-size", "24px")
-    .style("font-weight", "bold")
-    .text("NFL Team Attendance Breakdown by Percentage Share....");
-
-  const legend = svg.append("g")
-    .attr("transform", `translate(${outerRadius + 150}, ${-outerRadius})`);
-
-  const legendRectSize = 20;
-  const legendItemHeight = 25;
-
-  const legendItems = legend.selectAll(".legend-item")
-    .data(processedData)
-    .enter()
-    .append("g")
-    .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(0, ${i * legendItemHeight})`);
-
-  legendItems.append("rect")
-    .attr("width", legendRectSize)
-    .attr("height", legendRectSize)
-    .style("fill", d => colorScale(d.total));
-
-  legendItems.append("text")
-    .attr("x", legendRectSize + 10)
-    .attr("y", legendRectSize / 2)
-    .attr("dy", "0.5em")
-    .style("font-size", "14px")
-    .text(d => `${d.team} (${d.totalPercentage}%)`);
-
-  svg.call(d3.zoom()
-    .scaleExtent([1, 4])
-    .on("zoom", function() {
-      svg.attr("transform", d3.event.transform);
+    const leagueData = leagues.map(league => ({
+      league: league,
+      revenues: data.map(d => ({
+        year: +d.Year,
+        revenue: +d[`${league} Revenue (Billion USD)`]
+      }))
     }));
 
-  svg.on("click", function() {
-    const currentTransform = d3.zoomTransform(this);
-    const newTransform = currentTransform.scale(currentTransform.k * 0.9);
-    svg.transition().duration(500).call(d3.zoom().transform, newTransform);
+    const angleScale = d3.scaleBand()
+      .domain(data.map(d => d.Year))
+      .range([0, 2 * Math.PI])
+      .padding(0.1);
+
+    const radialScale = d3.scaleLinear()
+      .domain([0, d3.max(leagueData, d => d3.max(d.revenues, r => r.revenue))])
+      .range([0, radius - 50]);
+
+    leagues.forEach((league, index) => {
+      const lineRadial = d3.lineRadial()
+        .angle(d => angleScale(d.year))
+        .radius(d => radialScale(d.revenue))
+        .curve(d3.curveCardinal);
+
+      const leagueGroup = svg.append("g")
+        .attr("class", `league-group league-${league}`);
+
+      leagueGroup.append("path")
+        .datum(leagueData.find(d => d.league === league).revenues)
+        .attr("fill", colorScale(league))
+        .attr("fill-opacity", 0.5)
+        .attr("stroke", colorScale(league))
+        .attr("stroke-width", 2)
+        .attr("d", lineRadial)
+        .on("mouseover", function() {
+          d3.selectAll(".league-group")
+            .transition()
+            .style("opacity", 0.2);
+          d3.select(this)
+            .transition()
+            .style("opacity", 1);
+        })
+        .on("mouseout", function() {
+          d3.selectAll(".league-group")
+            .transition()
+            .style("opacity", 1);
+        });
+
+      leagueGroup.selectAll(".league-point")
+        .data(leagueData.find(d => d.league === league).revenues)
+        .enter()
+        .append("circle")
+        .attr("class", "league-point")
+        .attr("cx", d => radialScale(d.revenue) * Math.cos(angleScale(d.year) - Math.PI/2))
+        .attr("cy", d => radialScale(d.revenue) * Math.sin(angleScale(d.year) - Math.PI/2))
+        .attr("r", 4)
+        .attr("fill", colorScale(league))
+        .on("mouseover", function(event, d) {
+          d3.select("#polar-tooltip")
+            .style("opacity", 1)
+            .html(`
+              <strong>${league} League</strong><br>
+              Year: ${d.year}<br>
+              Revenue: $${d.revenue} Billion
+            `)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function() {
+          d3.select("#polar-tooltip")
+            .style("opacity", 0);
+        });
+    });
+
+    leagues.forEach((league, index) => {
+      const angle = (2 * Math.PI / leagues.length) * index;
+      const labelRadius = radius + 20;
+      
+      svg.append("text")
+        .attr("x", labelRadius * Math.cos(angle - Math.PI/2))
+        .attr("y", labelRadius * Math.sin(angle - Math.PI/2))
+        .attr("text-anchor", "middle")
+        .attr("alignment-baseline", "middle")
+        .text(league)
+        .attr("fill", colorScale(league))
+        .attr("font-weight", "bold");
+    });
+
+    const axisCircles = [5, 10, 15, 20];
+    svg.selectAll(".radial-axis")
+      .data(axisCircles)
+      .enter()
+      .append("circle")
+      .attr("r", d => radialScale(d))
+      .attr("fill", "none")
+      .attr("stroke", "#e0e0e0")
+      .attr("stroke-dasharray", "4 2");
+
+    svg.selectAll(".radial-axis-label")
+      .data(axisCircles)
+      .enter()
+      .append("text")
+      .attr("x", 5)
+      .attr("y", d => -radialScale(d))
+      .attr("text-anchor", "start")
+      .attr("alignment-baseline", "middle")
+      .text(d => `$${d}B`)
+      .attr("font-size", "10px")
+      .attr("fill", "#999");
+
+    svg.append("text")
+      .attr("x", 0)
+      .attr("y", -radius - 30)
+      .attr("text-anchor", "middle")
+      .text("League Revenues (2004-2023)")
+      .attr("font-weight", "bold")
+      .attr("font-size", "16px");
   });
 }
 
-d3.csv("data.csv").then(createRadialChart);
+d3.select("body")
+  .append("div")
+  .attr("id", "polar-tooltip")
+  .style("position", "absolute")
+  .style("background", "white")
+  .style("border", "1px solid #ddd")
+  .style("padding", "10px")
+  .style("border-radius", "5px")
+  .style("opacity", 0)
+  .style("pointer-events", "none");
+
+createPolarAreaChart();
