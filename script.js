@@ -260,8 +260,7 @@ function createRadialChart(data) {
   const innerRadius = 150;
   const outerRadius = Math.min(width, height) / 2 - 100;
 
-  // Identify top teams (Dallas Cowboys and New York Jets)
-  const topTeams = ["Dallas Cowboys", "New York Jets"];
+  const topTeams = ["Dallas Cowboys", "Las Vegas Raiders"];
 
   const processedData = data
     .map((d) => ({
@@ -378,7 +377,6 @@ function createRadialChart(data) {
     .attr("stroke-width", (d) => (d.data.isTopTeam ? 4 : 2))
     .on("mouseover", function (event, d) {
       if (!activeTeam || activeTeam === d.data.team) {
-        // Prevent multiple simultaneous hover effects
         d3.selectAll(".arc path").attr("opacity", 0.5);
 
         d3.select(this)
@@ -482,10 +480,6 @@ function createRadialChart(data) {
       }
     });
 
-  // Rest of the code remains the same as in the previous version...
-  // (arcs, labels, legend, zoom functionality)
-
-  // Keeping the rest of the function identical to the previous version
   arcs
     .append("text")
     .attr("id", (d) => `team-label-${d.data.team.replace(/\s+/g, "-")}`)
@@ -512,48 +506,6 @@ function createRadialChart(data) {
     .style("font-weight", "bold")
     .text("NFL Team Attendance Breakdown");
 
-  const legend = svg
-    .append("g")
-    .attr("transform", `translate(${outerRadius + 50}, ${-outerRadius})`);
-
-  const legendRectSize = 20;
-  const legendItemHeight = 25;
-
-  const legendItems = legend
-    .selectAll(".legend-item")
-    .data(processedData)
-    .enter()
-    .append("g")
-    .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(0, ${i * legendItemHeight})`);
-
-  legendItems
-    .append("rect")
-    .attr("width", legendRectSize)
-    .attr("height", legendRectSize)
-    .style("fill", (d) => {
-      if (d.isTopTeam) {
-        return "#00072D";
-      }
-      return colorScale(d.total);
-    });
-
-  legendItems
-    .append("text")
-    .attr("x", legendRectSize + 10)
-    .attr("y", legendRectSize / 2)
-    .attr("dy", "0.5em")
-    .style("font-size", "14px")
-    .text((d) => `${d.totalPercentage}%`);
-
-  const zoom = d3
-    .zoom()
-    .scaleExtent([1, 4])
-    .on("zoom", function (event) {
-      svg.attr("transform", event.transform);
-    });
-
-  svg.call(zoom);
 
   svg.on("click", function (event) {
     if (event.target === this) {
