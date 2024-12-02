@@ -377,6 +377,7 @@ function createRadialChart(data) {
     .attr("stroke-width", (d) => (d.data.isTopTeam ? 4 : 2))
     .on("mouseover", function (event, d) {
       if (!activeTeam || activeTeam === d.data.team) {
+        // Prevent multiple simultaneous hover effects
         d3.selectAll(".arc path").attr("opacity", 0.5);
 
         d3.select(this)
@@ -506,6 +507,7 @@ function createRadialChart(data) {
     .style("font-weight", "bold")
     .text("NFL Team Attendance Breakdown");
 
+  
 
   svg.on("click", function (event) {
     if (event.target === this) {
