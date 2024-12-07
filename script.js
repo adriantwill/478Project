@@ -245,14 +245,12 @@ Promise.all([
       const stateId = d.id;
       const teamsInState = teamData.filter((team) => team.id === stateId);
       if (teamsInState.length > 0) {
-        updateGraph(teamsInState[0].team_name);
+        heatmapTeams = updateGraph(teamsInState[0].team_name);
       } else {
         console.log("No NFL teams in this state");
       }
     });
 });
-
-selectedTean = "Cowboys";
 
 d3.csv("data.csv").then((data) => {
   const margin = { top: 50, right: 20, bottom: 50, left: 200 };
