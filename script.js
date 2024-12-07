@@ -507,8 +507,6 @@ function createRadialChart(data) {
     .style("font-weight", "bold")
     .text("NFL Team Attendance Breakdown");
 
-  
-
   svg.on("click", function (event) {
     if (event.target === this) {
       const currentTransform = d3.zoomTransform(this);
