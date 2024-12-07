@@ -5,205 +5,163 @@ const svg = d3.select("#usMap");
 const map_tooltip = d3.select("#map_tooltip");
 Promise.all([
   d3.csv("NFL_team_data.csv"),
-  d3.csv("nfl_team_stats_2002-2023.csv"), // The file with stats for each team
+  d3.csv("nfl_team_stats_2002-2023.csv"), 
   d3.json("https://d3js.org/us-10m.v1.json"),
 ]).then(([teamData, statsData, us]) => {
   const teams = teamData.map((d) => d.team_name);
 
-  const stats = d3
-    .select("#stats")
-    .append("svg")
-    .attr("width", width + 100 + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+const off_stats = d3
+  .select("#off_stats")
+  .append("svg")
+  .attr("width", width + 100 + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const xScale = d3
-    .scalePoint()
-    .range([10, width + 100])
-    .padding(0.15);
-  const yScale = d3.scaleLinear().range([height, 0]);
+const def_stats = d3
+  .select("#def_stats")
+  .append("svg")
+  .attr("width", width + 100 + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const xAxis = stats
-    .append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale));
+const xScale = d3.scalePoint().range([10, width + 100]).padding(0.15);
+const yScale = d3.scaleLinear().range([height, 0]);
 
-  const yAxis = stats.append("g").call(d3.axisLeft(yScale));
+const xAxis = (svg) => svg.append("g").attr("transform", `translate(0,${height})`);
+const yAxis = (svg) => svg.append("g");
 
-  function updateGraph(selectedTeam) {
-    selectedTeam = selectedTeam.split(" ");
-    selectedTeam = selectedTeam[selectedTeam.length - 1];
-    let selectedTeams = [];
-    if (selectedTeam !== "Cowboys" && selectedTeam !== "Cardinals") {
-      selectedTeams = ["Cardinals", "Cowboys", selectedTeam];
-    } else {
-      selectedTeams = ["Cowboys", "Cardinals"];
-    }
+function updateGraph(selectedTeam) {
+  selectedTeam = selectedTeam.split(" ")
+  selectedTeam = selectedTeam[selectedTeam.length - 1]
+  let selectedTeams = []
+  if(selectedTeam !== "Cowboys" && selectedTeam !== "Cardinals"){
+    selectedTeams = ["Cardinals", "Cowboys", selectedTeam];
+  } else {
+    selectedTeams = ["Cowboys", "Cardinals"];
+  }
 
-    const teamStats = statsData.filter(
-      (d) =>
-        selectedTeams.some(
-          (team) => team.includes(d.home) || team.includes(d.away)
-        ) && d.season === "2023"
-    );
-    console.log(selectedTeams);
-    const yardsData = selectedTeams.flatMap((team) => {
-      return teamStats
-        .filter((d) => d.home === team || d.away === team)
-        .map((d, index, arr) => {
-          let yards = 0;
-          if (team === d.home) {
-            yards = +d.yards_home;
-          } else if (team === d.away) {
-            yards = +d.yards_away;
-          }
+  const teamStats = statsData.filter(
+    (d) => selectedTeams.some(team => 
+      team.includes(d.home) || team.includes(d.away)
+    ) && d.season === "2023"
+  );
 
-          let weekLabel;
-          if (
-            d.week === "Division" ||
-            d.week === "Wildcard" ||
-            d.week === "Superbowl" ||
-            d.week === "Conference"
-          ) {
-            weekLabel = d.week;
-          } else {
-            if (index !== 0 && +arr[index - 1].week + 1 !== +d.week) {
-              if (!isNaN(d.week)) {
-                weekLabel = "Game " + (+d.week - 1);
-                d.week = d.week - 1;
-              }
-            } else {
-              weekLabel = "Game " + d.week;
+  const yardsData = selectedTeams.flatMap((team) => {
+    return teamStats
+      .filter((d) => d.home === team || d.away === team)
+      .map((d, index, arr) => {
+        let yards = 0;
+        let oppYards = 0;
+        if (team === d.home) {
+          yards = +d.yards_home;
+          oppYards = +d.yards_away;
+        } else if (team === d.away) {
+          yards = +d.yards_away;
+          oppYards = +d.yards_home;
+        }
+
+        let weekLabel;
+        if (d.week === "Division" || d.week === "Wildcard" || d.week === "Superbowl" || d.week === "Conference") {
+          weekLabel = d.week;
+        } else {
+          if (index !== 0 && (+arr[index - 1].week + 1) !== +d.week) {
+            if (!isNaN(d.week)) {
+              weekLabel = "Game " + (+d.week - 1);
+              d.week = d.week - 1
             }
+          } else {
+            weekLabel = "Game " + d.week;
           }
+        }
 
-          return {
-            team: team,
-            week: weekLabel,
-            yards: yards,
-          };
-        });
-    });
+        return {
+          team: team,
+          week: weekLabel,
+          yards: yards,
+          oppYards: oppYards
+        };
+      });
+  });
 
-    yardsData.sort((a, b) => {
-      const weekA = a.week.match(/\d+/) ? +a.week.match(/\d+/)[0] : a.week;
-      const weekB = b.week.match(/\d+/) ? +b.week.match(/\d+/)[0] : b.week;
+  yardsData.sort((a, b) => {
+    const weekA = a.week.match(/\d+/) ? +a.week.match(/\d+/)[0] : a.week;
+    const weekB = b.week.match(/\d+/) ? +b.week.match(/\d+/)[0] : b.week;
 
-      if (typeof weekA === "number" && typeof weekB === "number") {
-        return weekA - weekB;
-      } else {
-        const weekOrder = ["Wildcard", "Division", "Conference", "Superbowl"];
-        return weekOrder.indexOf(weekA) - weekOrder.indexOf(weekB);
-      }
-    });
+    if (typeof weekA === 'number' && typeof weekB === 'number') {
+      return weekA - weekB;
+    } else {
+      const weekOrder = ["Wildcard", "Division", "Conference", "Superbowl"];
+      return weekOrder.indexOf(weekA) - weekOrder.indexOf(weekB);
+    }
+  });
 
-    console.log(yardsData);
+  const weeks = Array.from(new Set(yardsData.map((d) => d.week)));
 
-    const weeks = Array.from(new Set(yardsData.map((d) => d.week)));
+  xScale.domain(weeks);
+  yScale.domain([0, d3.max(yardsData, (d) => Math.max(d.yards, d.oppYards)) + 5]);
 
-    xScale.domain(weeks);
-    yScale.domain([0, d3.max(yardsData, (d) => d.yards) + 5]);
+  const xAxisOffense = xAxis(off_stats);
+  const yAxisOffense = yAxis(off_stats);
+  xAxisOffense.transition().duration(1000).call(d3.axisBottom(xScale));
+  yAxisOffense.transition().duration(1000).call(d3.axisLeft(yScale));
 
-    xAxis.transition().duration(1000).call(d3.axisBottom(xScale));
-    yAxis.transition().duration(1000).call(d3.axisLeft(yScale));
+  const xAxisDefense = xAxis(def_stats);
+  const yAxisDefense = yAxis(def_stats);
+  xAxisDefense.transition().duration(1000).call(d3.axisBottom(xScale));
+  yAxisDefense.transition().duration(1000).call(d3.axisLeft(yScale));
 
-    const lines = stats
+  function update(svg, data, yValue, color) {
+    const lines = svg
       .selectAll(".lollipop-line")
-      .data(yardsData, (d) => d.week + d.team);
+      .data(data, (d) => d.week + d.team);
 
     lines
       .enter()
       .append("line")
       .attr("class", "lollipop-line")
-      .attr("x1", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week); // Default
-      })
-      .attr("x2", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week);
-      })
+      .attr("x1", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
+      .attr("x2", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
       .attr("y1", yScale(0))
       .attr("y2", yScale(0))
-      .attr("stroke", (d) =>
-        d.team === "Cardinals" ? "blue" : d.team === "Cowboys" ? "green" : "red"
-      )
+      .attr("stroke", (d) => (d.team === selectedTeams[0] ? "blue" : d.team === "Cowboys" ? "green" : "red"))
       .merge(lines)
       .transition()
       .duration(1000)
-      .attr("x1", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week);
-      })
-      .attr("x2", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week);
-      })
-      .attr("y2", (d) => yScale(d.yards));
-
-    console.log(yardsData);
+      .attr("x1", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
+      .attr("x2", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
+      .attr("y2", (d) => yScale(d[yValue]));
 
     lines.exit().remove();
-    const circles = stats
+
+    const circles = svg
       .selectAll(".lollipop-circle")
-      .data(yardsData, (d) => d.week + d.team);
+      .data(data, (d) => d.week + d.team);
 
     circles
       .enter()
       .append("circle")
       .attr("class", "lollipop-circle")
-      .attr("cx", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week);
-      })
+      .attr("cx", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
       .attr("cy", yScale(0))
       .attr("r", 5)
-      .attr("fill", (d) =>
-        d.team === selectedTeams[0]
-          ? "blue"
-          : d.team === "Cowboys"
-          ? "green"
-          : "red"
-      )
+      .attr("fill", (d) => (d.team === selectedTeams[0] ? "blue" : d.team === "Cowboys" ? "green" : "red"))
       .merge(circles)
       .transition()
       .duration(1000)
-      .attr("cx", (d) => {
-        if (d.team === "Cowboys") {
-          return xScale(d.week) + 10;
-        } else if (d.team === "Cardinals") {
-          return xScale(d.week) - 10;
-        }
-        return xScale(d.week);
-      })
-      .attr("cy", (d) => yScale(d.yards));
+      .attr("cx", (d) => (d.team === 'Cowboys' ? xScale(d.week) + 10 : d.team === 'Cardinals' ? xScale(d.week) - 10 : xScale(d.week)))
+      .attr("cy", (d) => yScale(d[yValue]));
 
     circles.exit().remove();
-    return selectedTeams;
   }
 
-  heatmapTeams = updateGraph(teams[0]);
+  update(off_stats, yardsData, "yards", "current");
+  update(def_stats, yardsData, "oppYards", "opponent");
+}
+
+  updateGraph(teams[0])
+  heatmapTeams = ["Cardinals","Cowboys"];
 
   const path = d3.geoPath();
   svg
