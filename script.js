@@ -517,11 +517,10 @@ function createRadialChart(data) {
 }
 
 d3.csv("Stats_populatiy.csv").then((data) => {
-  const margin = { top: 50, right: 20, bottom: 50, left: 200 };
+  const margin = { top: 50, right: 20, bottom: 50, left: 0 };
   const width = 1400 - margin.left - margin.right;
   const height = 700 - margin.top - margin.bottom;
 
-  // Set up SVG canvas
   const svg  = d3
   .select("#area-chart")
   .append("svg")
@@ -530,22 +529,18 @@ d3.csv("Stats_populatiy.csv").then((data) => {
   .append("g")
   .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Process the data into a hierarchy
   const root = d3.hierarchy({ children: data.map(d => ({ name: d.Team, value: +d.Instagram })) })
     .sum(d => d.value);
 
-  // Treemap layout
   const treemap = d3.treemap()
     .size([width, height])
     .paddingInner(1);
   treemap(root);
 
-  // Color scale for rectangles
   const colorScale = d3.scaleSequential(d3.interpolateBlues)
     .domain([0, d3.max(data, d => +d.Instagram)]);
 
 
-  // Add rectangles and text
   svg.selectAll("rect")
     .data(root.leaves())
     .enter()
@@ -555,11 +550,7 @@ d3.csv("Stats_populatiy.csv").then((data) => {
     .attr("width", d => d.x1 - d.x0)
     .attr("height", d => d.y1 - d.y0)
     .attr("fill", d => colorScale(d.value))
-    .attr("class", "node")
-    .on("mouseover", (event, d) => {
-      tooltip.style("display", "block")
-        .html(`<strong>${d.data.name}</strong>: ${d.data.value}`);
-    })
+    .attr("class", "node");
 
   svg.selectAll("text")
     .data(root.leaves())
