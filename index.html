@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>USA Map with Hoverable States</title>
+    <title>Why do we watch the NFL?</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
     <link rel="stylesheet" href="style.css" />
@@ -24,10 +24,9 @@
       </div>
       <div class="story-step">
         <div style="width: 90%">
-          To answer this question we first need to define what makes a team
-          popular. For our analysis we have chosen to look at the viewership
-          data for each game for the 2023 season to see which team is able to
-          attract attention through the season.
+          To answer this question we first need to define what makes a team popular. For our analysis we have chosen
+    	to look at the viewership data for each game for the 2023 season to see which team is able to attract attention
+    	through the season. The radial chart below compares all 32 teams using their percentage share of viewership over the season.
         </div>
       </div>
       <div class="story-step" id="radial-chart-container">
@@ -35,28 +34,53 @@
       </div>
       <div class="story-step">
         <div style="width: 90%">
-          As shown by the chart the NFL maintains a fascinating balance of
-          viewership and popularity with no teams consistently dominating the
-          viewership numbers and no teams struggling to find an audience. This
-          equilibrium suggests that while performance is important it is not the
-          only metric fans use to choose teams. The rest of the article will
-          take a look at comparing the most popular team this season (Dallas
-          Cowboys) with one of the least popular teams (Arizona Cardinals).
-          However, we invite you to make this visualization more personal:
-          choose your favorite team and see how their performance and viewership
-          stacks up against our chosen teams.
+          The most interesting thing about this chart is the almost exactly even share of viewership held by each team. Most other sports leagues have clear favorites that draw more viewers than the less popular teams, however the NFL maintains a fascinating balance of viewership and popularity with no teams consistently dominating the viewership numbers and no teams struggling to find an audience.
+    	This balance suggests that a team’s popularity is not solely determined by performance.
+    	The rest of this case study will take a look at better understanding the reasons that fans choose their favorite teams. To properly investigate this we compared the most popular team this season (Dallas Cowboys) with
+    	one of the least popular teams (Arizona Cardinals). However, we invite you to make this visualization more personal:
+    	choose your favorite team and see how their performance and viewership stacked up against our chosen teams during the 2023 season.
         </div>
       </div>
       <div class="story-step" class="center_div">
         <svg id="usMap" width="950" height="650"></svg>
       </div>
+      <div class="story-step">
+        <div style="width: 90%">
+          The first thing we thought to compare to understand how viewership and popularity is distributed was to compare offensive and defensive stats to see if a team's performance helps provide some insight into a team's popularity. The stats we chose to compare were yards gained to show offensive prowess and yards allowed to demonstrate a team's ability to shut down their opponents. 
+        </div>
+  </div>
+
       <div class="story-step" class="center_div">
         <div id="off_stats"></div>
       </div>
+      <div class="story-step">
+        <div style="width: 90%">
+          This chart compares yards gained per game per team. This stat shows how much forward progress a team was able to make over the course of the game, a higher value indicates a more productive offense, able to make plays that moved them forward very efficiently. Looking at this chart we can see that teams were usually performing quite similarly to each other, making about the same amount of forward progress as every other team, with very few exceptions or spectacular or terrible performance. If offensive performance is even across the board perhaps teams are chosen by how dominating their defense is.  
+        </div>
+  </div>
       <div class="story-step" class="center_div">
         <div id="def_stats"></div>
       </div>
       <div class="story-step">
+        <div style="width: 90%">
+      This chart looks at how many yards each team allowed per game through the season. How many yards a team allowed shows how good the team is at preventing their opponent from making progress through the game. Looking at this chart we came to the same conclusions as the offensive performance chart, teams often perform at a similar level allowing an even number of yards per game.
+    </div>
+  </div>
+  <div class="story-step">
+    <div style="width: 90%">
+  Clearly, offensive or defensive performance does not play into a team's popularity as performance between teams and games remains consistent. Since popularity does not seem to be directly tied to on-field performance we wanted to further investigate what other factors might influence a fan to choose their favorite team. 
+  </div>
+  </div>
+  <div class="story-step" class="center_div">
+    <div id="area-chart" class="chart-container"></div>
+  </div>
+  <div class="story-step">
+    <div style="width: 90%">
+      This chart fits our expectations of a team's popularity and viewership and shows that the most popular teams often have the most followers. However an interesting detail we discovered was NFL teams have disproportionately small followings on social media, despite generating as much revenue as they do. During our research we realized that the NFL’s average viewer was 50 years old, which explains why the NFL has a large number of viewers but very few social media followers.
+  </div>
+  </div>
+  
+  <div class="story-step">
         <div style="width: 90%">
           Finally we wanted to show how each team is influenced on a week by
           week basis. It is clear that the most popular teams have by far the
@@ -70,10 +94,14 @@
       <div class="story-step" class="center_div">
         <div id="heatmap"></div>
       </div>
-      <div class="story-step" class="center_div">
-        <div id="area-chart" class="chart-container"></div>
+    </div>
+
+    <div class="story-step">
+      <div style="width: 90%">
+        The answer to the question of what drives an NFL team’s popularity is the stories told over the course of decades, teams maintain an even balance of viewers because fans are bonded to their favorite teams. Fans of the NFL are older and have been following their teams for years, they don’t change their teams because of a bad game or a bad year they stick by their team through thick and thin. This loyalty to their teams is why the NFL is the most valuable sports league in the world, and that loyalty is born through decades of legacy. That's why most teams are able to maintain even viewership.  
       </div>
     </div>
+  
     <div id="map_tooltip"></div>
     <script src="script.js"></script>
   </body>

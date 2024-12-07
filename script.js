@@ -554,16 +554,7 @@ function createRadialChart(data) {
     .style("fill", "black")
     .style("font-weight", "bold")
     .style("opacity", (d) => (d.data.isTopTeam ? 1 : 0.2));
-
-  svg
-    .append("text")
-    .attr("x", 0)
-    .attr("y", -outerRadius - 70)
-    .attr("text-anchor", "middle")
-    .style("font-size", "24px")
-    .style("font-weight", "bold")
-    .text("NFL Team Attendance Breakdown");
-
+    
   svg.on("click", function (event) {
     if (event.target === this) {
       const currentTransform = d3.zoomTransform(this);
