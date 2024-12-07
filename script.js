@@ -102,15 +102,32 @@ function updateGraph(selectedTeam) {
   xScale.domain(weeks);
   yScale.domain([0, d3.max(yardsData, (d) => Math.max(d.yards, d.oppYards)) + 5]);
 
-  const xAxisOffense = xAxis(off_stats);
-  const yAxisOffense = yAxis(off_stats);
-  xAxisOffense.transition().duration(1000).call(d3.axisBottom(xScale));
-  yAxisOffense.transition().duration(1000).call(d3.axisLeft(yScale));
+  // Remove any existing axes first
+off_stats.selectAll(".x-axis").remove();
+off_stats.selectAll(".y-axis").remove();
+def_stats.selectAll(".x-axis").remove();
+def_stats.selectAll(".y-axis").remove();
 
-  const xAxisDefense = xAxis(def_stats);
-  const yAxisDefense = yAxis(def_stats);
-  xAxisDefense.transition().duration(1000).call(d3.axisBottom(xScale));
-  yAxisDefense.transition().duration(1000).call(d3.axisLeft(yScale));
+// Redraw x-axis
+off_stats.append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(xScale));
+
+// Redraw y-axis  
+off_stats.append("g")
+  .attr("class", "y-axis")
+  .call(d3.axisLeft(yScale));
+
+// Repeat for defense stats
+def_stats.append("g")
+  .attr("class", "x-axis")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(xScale));
+
+def_stats.append("g")
+  .attr("class", "y-axis")
+  .call(d3.axisLeft(yScale));
 
   function update(svg, data, yValue, color) {
     const lines = svg
@@ -296,15 +313,23 @@ d3.csv("data.csv").then((data) => {
     .filter((d) => !heatmapTeams.includes(d.team))
     .style("opacity", 0.4);
 
-  svg
-    .append("g")
-    .call(d3.axisTop(xScale))
-    .attr("class", "axis")
-    .selectAll("text")
-    .attr("transform", "rotate(-45)")
-    .style("text-anchor", "start");
+  // Adjust x-axis (top)
+svg
+.append("g")
+.attr("class", "x-axis")
+.call(d3.axisTop(xScale))
+.attr("transform", "translate(0, 0)")
+.selectAll("text")
+.attr("transform", "rotate(-45)")
+.style("text-anchor", "start")
+.attr("dx", "-.8em")
+.attr("dy", ".15em");
 
-  svg.append("g").call(d3.axisLeft(yScale)).attr("class", "axis");
+// Adjust y-axis (left)
+svg
+.append("g")
+.attr("class", "y-axis")
+.call(d3.axisLeft(yScale));
 });
 
 function createRadialChart(data) {
